@@ -55,8 +55,10 @@ html,body{
 body{-webkit-tap-highlight-color:transparent;overscroll-behavior:none;}
 button{font-family:var(--font-body);cursor:pointer;}
 input{font-family:var(--font-body);}
-::-webkit-scrollbar{width:8px;height:8px;}
-::-webkit-scrollbar-thumb{background:var(--ink-border);border-radius:4px;}
+/* Oculta apenas o indicador visual de rolagem; o gesto/scroll continua normal. */
+html{scrollbar-width:none;-ms-overflow-style:none;}
+*{scrollbar-width:none;-ms-overflow-style:none;}
+*::-webkit-scrollbar{display:none;width:0;height:0;}
 button:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 @media(prefers-reduced-motion: reduce){
   *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
@@ -1187,6 +1189,8 @@ html,body,button,input,select,textarea{font-family:'WhizBang','Inter',sans-serif
 .detail-grid-download svg{width:14px;height:14px;}
 .detail-download-all{width:54px;height:54px;flex:0 0 54px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.13);border-radius:50%;background:#171a20;color:#fff;}
 .detail-download-all svg{width:23px;height:23px;}
+.detail-download-one{width:54px;height:54px;flex:0 0 54px;position:static;display:grid;place-items:center;border:1px solid rgba(255,255,255,.13);border-radius:50%;background:#171a20;color:#fff;opacity:1;}
+.detail-download-one svg{width:23px;height:23px;}
 .detail-chapter-cover{position:relative;width:100%;aspect-ratio:2/3;overflow:hidden;border-radius:7px;background:linear-gradient(145deg,#182336,#111722);box-shadow:0 6px 15px rgba(0,0,0,.35);}
 .detail-chapter-cover .cover-placeholder{position:absolute;inset:0;display:grid;place-items:center;color:var(--text-muted);}
 #collection-details-screen .detail-chapter-cover .cover{width:100%;height:100%;object-fit:contain;background:#10141c;}
@@ -1591,6 +1595,10 @@ const READER_PREFS_KEY = 'planetahq_reader_prefs';
 const ACCESS_CODE_KEY = 'planetahq_access_code';
 
 const DEMOLIDOR_COLLECTION_FOLDER_ID = '18tH5RkW0MWvtqiCaJSQcIG9sb7gfq736';
+const HOMEM_ARANHA_COLLECTION_FOLDER_ID = '1MWAzehuiyTgBipvuMpSdUCcUtUVoakpw';
+const SUPERMAN_COLLECTION_FOLDER_ID = '1-0yn9xWnhyXgLLHZwcDJYHa9kRlUTibq';
+const DARKSEID_COLLECTION_FOLDER_ID = '1JZLe3FKjKSF-NSawwMq738-p0FE0NJSc';
+const THANOS_COLLECTION_FOLDER_ID = '1as-rgtdk73JKdJzayJmZp9lXe8xrf_vm';
 const DEMOLIDOR_DETAIL_METADATA = {
   '1Al9UQEfRRP_Do3YS1HmlAjt9x1sD3smQ': {author:'Stan Lee e equipe clássica da Marvel', period:'1964–1969', genres:['Super-herói','Ação','Clássico'], synopsis:'As primeiras aventuras de Matt Murdock como o Demolidor. Depois de perder a visão em um acidente, Matt desenvolve sentidos extraordinários, torna-se advogado durante o dia e combate o crime nas ruas de Nova York à noite.'},
   '1_rWlFBeGArYEoMXiw9kFU6CwsttZpS5u': {author:'Vários autores', period:'Coleção em volumes', genres:['Super-herói','Clássico','Aventura'], synopsis:'Uma seleção em volumes de histórias do Homem Sem Medo. Acompanhe diferentes fases de Matt Murdock, seus aliados e seus conflitos na defesa de Hell’s Kitchen.'},
@@ -1681,6 +1689,51 @@ const CAPITAO_AMERICA_COLLECTION_FOLDER_ID = '1ZeY9RGMsk7dta6UrZtgqNXLy1BxZVPrJ'
 const DEADPOOL_COLLECTION_FOLDER_ID = '1s23KAyPND6CMtRvn2T3DIFBR2jro51Nu';
 const UNIVERSO_ABSOLUTO_COLLECTION_FOLDER_ID = '1y1E9jtPPvWqVMKlLbxTk6kybI2uEMMag';
 const COLLECTION_DETAIL_ROOT_FALLBACKS = {
+  [HOMEM_ARANHA_COLLECTION_FOLDER_ID]: {
+    default:{author:'',period:'Fases e histórias variadas',genres:['Super-herói','Ação','Aventura'],synopsis:'Peter Parker equilibra a vida cotidiana com a responsabilidade de proteger Nova York como Homem-Aranha. Esta coleção reúne histórias de diferentes fases e formatos, incluindo encontros, aventuras solo e releituras do herói.'},
+    rules:[
+      {pattern:/amazing fantasy/i,meta:{author:'Stan Lee e Steve Ditko',period:'Amazing Fantasy #15 · 1962',genres:['Super-herói','Origem','Clássico'],synopsis:'Em sua estreia, o jovem Peter Parker ganha poderes após ser picado por uma aranha radioativa. Depois de uma perda que o marca profundamente, ele entende que grandes poderes trazem grandes responsabilidades.'}},
+      {pattern:/espantoso homem.?aranha/i,meta:{author:'Stan Lee e Steve Ditko',period:'The Amazing Spider-Man · fase inicial',genres:['Super-herói','Ação','Clássico'],synopsis:'As primeiras aventuras solo de Peter Parker acompanham seus desafios como estudante, fotógrafo e herói, enquanto enfrenta inimigos que ameaçam Nova York.'}},
+      {pattern:/homem.?aranha azul/i,meta:{author:'Jeph Loeb e Tim Sale',period:'Minissérie · 2002–2003',genres:['Super-herói','Drama','Romance'],synopsis:'Peter Parker relembra o início de sua vida como Homem-Aranha e seu relacionamento com Gwen Stacy, revisitando perdas e momentos que marcaram sua trajetória.'}},
+      {pattern:/ultima ca[cç]ada de kraven/i,meta:{author:'J. M. DeMatteis e Mike Zeck',period:'Arco · 1987',genres:['Super-herói','Drama','Suspense'],synopsis:'Kraven, o Caçador, prepara seu confronto definitivo com o Homem-Aranha. O arco explora obsessão, identidade e o limite entre o herói e seu adversário.'}},
+      {pattern:/morte de gwen stacy/i,meta:{author:'Gerry Conway e Gil Kane',period:'Arco · 1973',genres:['Super-herói','Drama','Clássico'],synopsis:'Um confronto decisivo com o Duende Verde transforma para sempre a vida de Peter Parker e se torna um dos momentos mais marcantes da história do Homem-Aranha.'}},
+      {pattern:/morte de jean dewolff/i,meta:{author:'Peter David e Rich Buckler',period:'Arco · 1985–1986',genres:['Super-herói','Crime','Drama'],synopsis:'O assassinato da capitã Jean DeWolff leva o Homem-Aranha a uma investigação pessoal e sombria, com o Demolidor também envolvido na busca pelo responsável.'}},
+      {pattern:/homem.?aranha.?deadpool/i,meta:{author:'Joe Kelly e Ed McGuinness',period:'Série · iniciada em 2016',genres:['Super-herói','Ação','Humor'],synopsis:'O Homem-Aranha e Deadpool formam uma parceria improvável, marcada por missões perigosas, provocações e humor enquanto tentam lidar com ameaças em comum.'}},
+      {pattern:/2099/i,meta:{author:'Peter David e Rick Leonardi',period:'Homem-Aranha 2099 · fase inicial',genres:['Super-herói','Ficção científica','Ação'],synopsis:'No futuro de 2099, Miguel O’Hara assume o manto do Homem-Aranha e enfrenta corporações poderosas em uma sociedade dominada pela tecnologia.'}},
+
+    ]
+  },
+  [SUPERMAN_COLLECTION_FOLDER_ID]: {
+    default:{author:'',period:'Fases e histórias variadas',genres:['Super-herói','Ação','Ficção científica'],synopsis:'Clark Kent protege a Terra como Superman, enquanto busca conciliar sua origem kryptoniana, sua vida em Metrópolis e os valores que escolheu defender. A coleção reúne histórias de diferentes fases e versões do herói.'},
+    rules:[
+      {pattern:/alien[ií]gena americano/i,meta:{author:'Max Landis e equipe artística',period:'Série limitada · 2016–2017',genres:['Super-herói','Drama','Origem'],synopsis:'Uma releitura da juventude de Clark Kent, acompanhando os momentos em que ele descobre seus poderes e decide que tipo de herói quer ser.'}},
+      {pattern:/pelo amanh[aã]/i,meta:{author:'Brian Azzarello e Jim Lee',period:'Série limitada · 2004–2005',genres:['Super-herói','Drama','Mistério'],synopsis:'Após o desaparecimento de milhares de crianças, Superman procura respostas e enfrenta uma crise de fé sobre seus poderes, seus limites e seu lugar no mundo.'}},
+      {pattern:/origem secreta/i,meta:{author:'Geoff Johns e Gary Frank',period:'Minissérie · 2009–2010',genres:['Super-herói','Origem','Aventura'],synopsis:'Uma releitura da origem de Clark Kent, desde a infância em Smallville até sua chegada a Metrópolis e o início de sua trajetória como Superman.'}},
+      {pattern:/entre a foice e o martelo/i,meta:{author:'Mark Millar, Dave Johnson e Kilian Plunkett',period:'Minissérie · 2003',genres:['Super-herói','Ficção científica','Distopia'],synopsis:'Uma nave kryptoniana cai na União Soviética, mudando o destino de Kal-El. A história imagina como seria o mundo se Superman crescesse sob outra bandeira.'}},
+      {pattern:/o que aconteceu ao homem de a[cç]o/i,meta:{author:'Alan Moore e Curt Swan',period:'História em duas partes · 1986',genres:['Super-herói','Drama','Clássico'],synopsis:'Uma narrativa de despedida revisita os últimos dias do Superman e reúne aliados e inimigos em torno do destino do herói.'}},
+      {pattern:/morte e o retorno do superman/i,meta:{author:'Dan Jurgens e equipe criativa',period:'Saga · 1992–1993',genres:['Super-herói','Ação','Drama'],synopsis:'A chegada de Apocalypse culmina em um confronto devastador. Após a morte do Superman, quatro figuras surgem reivindicando seu legado, e Metrópolis precisa descobrir quem representa o verdadeiro herói.'}},
+      {pattern:/quatro esta[cç][oõ]es/i,meta:{author:'Jeph Loeb e Tim Sale',period:'Minissérie · 1998',genres:['Super-herói','Drama','Origem'],synopsis:'Quatro capítulos acompanham os primeiros anos de Clark Kent em Smallville e sua transformação gradual no protetor que o mundo viria a conhecer como Superman.'}},
+      {pattern:/grandes astros/i,meta:{author:'Grant Morrison e Frank Quitely',period:'Série limitada · 2005–2008',genres:['Super-herói','Ficção científica','Drama'],synopsis:'Diante de um prazo final, Superman percorre aventuras que testam sua coragem e revelam o que seu símbolo significa para as pessoas que tenta proteger.'}}
+    ]
+  },
+  [DARKSEID_COLLECTION_FOLDER_ID]: {
+    default:{author:'',period:'Histórias e eventos variados',genres:['Super-herói','Ficção científica','Ação'],synopsis:'Darkseid, soberano de Apokolips, busca subjugar o universo e encontrar a Equação Anti-Vida. Estas histórias reúnem confrontos cósmicos, crises e alianças entre os heróis da DC.'},
+    rules:[
+      {pattern:/guerra darkseid/i,meta:{author:'Geoff Johns e Jason Fabok',period:'Arco de Liga da Justiça · 2015–2016',genres:['Super-herói','Ação','Evento'],synopsis:'A Liga da Justiça enfrenta a guerra entre Darkseid e o Anti-Monitor, enquanto novos poderes e identidades transformam o destino dos heróis.'}},
+      {pattern:/crise final/i,meta:{author:'Grant Morrison e J. G. Jones, com colaboradores',period:'Evento DC · 2008–2009',genres:['Super-herói','Ficção científica','Evento'],synopsis:'Darkseid chega à Terra e desencadeia uma crise que ameaça apagar a liberdade e a própria realidade. Heróis de diferentes cantos do universo se unem para resistir.'}},
+      {pattern:/odiss[eé]ia c[oó]smica/i,meta:{author:'Jim Starlin e Mike Mignola',period:'Minissérie · 1988',genres:['Super-herói','Ficção científica','Aventura'],synopsis:'Uma ameaça cósmica força heróis a se dividir para impedir a destruição de mundos. Darkseid participa de uma aliança improvável diante de um perigo maior.'}},
+      {pattern:/liga da justi[cç]a por george p[eé]rez/i,meta:{author:'George Pérez',period:'Fase da Liga da Justiça',genres:['Super-herói','Ação','Equipe'],synopsis:'A Liga da Justiça enfrenta ameaças que exigem a união de heróis com habilidades e perspectivas distintas, em histórias associadas à fase de George Pérez.'}}
+    ]
+  },
+  [THANOS_COLLECTION_FOLDER_ID]: {
+    default:{author:'',period:'Histórias e sagas variadas',genres:['Super-herói','Ficção científica','Ação'],synopsis:'Thanos, o Titã Louco, busca poder absoluto e desafia heróis de toda a galáxia. A coleção reúne confrontos cósmicos e sagas que colocam em jogo o destino do universo.'},
+    rules:[
+      {pattern:/desafio infinito/i,meta:{author:'Jim Starlin e George Pérez',period:'Saga · 1991',genres:['Super-herói','Ficção científica','Evento'],synopsis:'Com as Joias do Infinito reunidas, Thanos desencadeia uma ameaça de escala universal. Heróis da Terra e do cosmos se unem para tentar deter o Titã Louco.'}},
+      {pattern:/guerra infinita/i,meta:{author:'Jim Starlin e Ron Lim',period:'Saga · 1992',genres:['Super-herói','Ficção científica','Evento'],synopsis:'Uma nova ameaça cósmica surge quando o lado maligno de Adam Warlock ganha forma. Os heróis precisam enfrentar uma força que conhece suas maiores fraquezas.'}},
+      {pattern:/cruzada infinita/i,meta:{author:'Jim Starlin e Ron Lim',period:'Saga · 1993',genres:['Super-herói','Ficção científica','Evento'],synopsis:'A Deusa inicia uma cruzada para impor sua visão de justiça ao universo. Thanos e os heróis precisam impedir que seu plano apague a liberdade de escolha.'}},
+      {pattern:/saga de thanos/i,meta:{author:'Jim Starlin e artistas da fase',period:'Coletânea de histórias de Thanos',genres:['Super-herói','Ficção científica','Clássico'],synopsis:'Uma seleção de histórias que acompanha a trajetória de Thanos e sua busca por poder, reunindo confrontos cósmicos e capítulos importantes de sua saga.'}}
+    ]
+  },
   [MOTOQUEIRO_COLLECTION_FOLDER_ID]: {
     default:{author:'Vários autores; os créditos variam entre fases e histórias',period:'Fases e arcos variados',genres:['Super-herói','Sobrenatural','Ação'],synopsis:'Histórias do Motoqueiro Fantasma exploram a maldição e a luta contra forças sobrenaturais, combinando ação, horror e o conflito entre o hospedeiro e o Espírito da Vingança.'},
     rules:[
@@ -4131,7 +4184,7 @@ async function renderLibrary(folderId, forceRefresh){
       return;
     }
     const isDemolidorRoot = folderId === DEMOLIDOR_COLLECTION_FOLDER_ID;
-    const isDetailsCollectionRoot = isDemolidorRoot || folderId === BATMAN_COLLECTION_FOLDER_ID || folderId === HULK_COLLECTION_FOLDER_ID || folderId === IRONMAN_COLLECTION_FOLDER_ID || folderId === MOTOQUEIRO_COLLECTION_FOLDER_ID || folderId === CAPITAO_AMERICA_COLLECTION_FOLDER_ID || folderId === DEADPOOL_COLLECTION_FOLDER_ID || folderId === UNIVERSO_ABSOLUTO_COLLECTION_FOLDER_ID;
+    const isDetailsCollectionRoot = isDemolidorRoot || folderId === BATMAN_COLLECTION_FOLDER_ID || folderId === HULK_COLLECTION_FOLDER_ID || folderId === IRONMAN_COLLECTION_FOLDER_ID || folderId === MOTOQUEIRO_COLLECTION_FOLDER_ID || folderId === CAPITAO_AMERICA_COLLECTION_FOLDER_ID || folderId === DEADPOOL_COLLECTION_FOLDER_ID || folderId === UNIVERSO_ABSOLUTO_COLLECTION_FOLDER_ID || folderId === HOMEM_ARANHA_COLLECTION_FOLDER_ID || folderId === SUPERMAN_COLLECTION_FOLDER_ID || folderId === DARKSEID_COLLECTION_FOLDER_ID || folderId === THANOS_COLLECTION_FOLDER_ID;
     const folderCards = folders.map(f=>{
       const card = renderFolderCard(f, isDetailsCollectionRoot ? {onOpen:item=>openCollectionDetails(item, folderId)} : undefined);
       // Se já sabemos (cache) que está vazia, nem chega a aparecer.
@@ -4229,24 +4282,44 @@ function renderComicCard(f, opts){
   };
   return card;
 }
+// Metadados editoriais manuais exportados pelo editor autônomo. O arquivo é opcional;
+// se não existir, o app continua usando os metadados embutidos normalmente.
+let CUSTOM_DETAIL_METADATA = Object.create(null);
+let customDetailMetadataPromise = null;
+function loadCustomDetailMetadata(){
+  if(customDetailMetadataPromise) return customDetailMetadataPromise;
+  customDetailMetadataPromise=fetch(new URL('./metadata.json',document.baseURI),{cache:'no-cache'})
+    .then(response=>response.ok?response.json():null)
+    .then(payload=>{
+      const items=payload&&payload.items;
+      if(items&&typeof items==='object'&&!Array.isArray(items)) CUSTOM_DETAIL_METADATA=items;
+      if(activeCollectionDetail) renderCollectionDetails();
+    })
+    .catch(()=>{});
+  return customDetailMetadataPromise;
+}
+void loadCustomDetailMetadata();
+
 function collectionDetailMeta(item){
+  const manual=CUSTOM_DETAIL_METADATA[item?.id]||{};
   const research=COLLECTION_DETAIL_RESEARCH[item?.id] || {};
   const known=DEMOLIDOR_DETAIL_METADATA[item.id] || BATMAN_DETAIL_METADATA[item.id] || HULK_DETAIL_METADATA[item.id] || IRONMAN_DETAIL_METADATA[item.id];
-  if(known) return {...known,...research};
+  if(known) return {...known,...research,...manual};
   const rootId=activeCollectionDetail?.parentId || item?._parentId || item?._collectionRoot?.id;
   const collection=COLLECTION_DETAIL_ROOT_FALLBACKS[rootId];
   if(collection){
     const title=detailCleanTitle(item?.name||'');
+    const normalizedTitle=detailNormalizeName(title);
     const meta={...collection.default};
-    const rule=(collection.rules||[]).find(entry=>entry.pattern.test(title));
+    const rule=(collection.rules||[]).find(entry=>entry.pattern.test(title)||entry.pattern.test(normalizedTitle));
     if(rule) Object.assign(meta,rule.meta);
     else{
       const years=title.match(/\b(?:19|20)\d{2}(?:\s*[-–]\s*(?:19|20)?\d{2})?\b/);
       if(years) meta.period=`${meta.period} · ${years[0]}`;
     }
-    return {...meta,...research};
+    return {...meta,...research,...manual};
   }
-  return {author:'Equipe criativa indicada na edição',...research,period:'Edição da coleção',genres:['Super-herói','Aventura'],synopsis:'Abra esta edição para ver a história e os créditos da equipe criativa.'};
+  return {author:'',period:'Edição da coleção',genres:['Super-herói','Aventura'],synopsis:'Abra esta edição para ver a história e os créditos da equipe criativa.',...research,...manual};
 }
 function detailCleanTitle(name){ return String(name||'').replace(/\.(pdf|cbz|cbr)$/i,'').replace(/_/g,' ').trim(); }
 function detailNormalizeName(value){ return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
@@ -4363,8 +4436,8 @@ function renderCollectionDetails(){
   const item=detail.item, isFolder=detailIsFolder(item), meta=collectionDetailMeta(item);
   const author=detailVisibleAuthor(meta.author);
   const titleInfo=detailTitleWithDateAndCredits(item.name,author);
-  const title=titleInfo.title;
-  const publicationDate=titleInfo.date || meta.publicationDate || COLLECTION_PUBLICATION_DATE_OVERRIDES[item.id] || '';
+  const title=String(meta.displayTitle||'').trim() || titleInfo.title;
+  const publicationDate=meta.publicationDate || titleInfo.date || COLLECTION_PUBLICATION_DATE_OVERRIDES[item.id] || '';
   const count=detail.listing ? detail.listing.files.length+detail.listing.folders.length : null;
   const countLabel=isFolder ? (count===null?'Coleção':`${count} ${count===1?'edição':'edições'}`) : 'HQ completa';
   screen.innerHTML=`
@@ -4375,7 +4448,7 @@ function renderCollectionDetails(){
         <div class="detail-cover"><div class="cover-placeholder skeleton">${ICONS.page}</div><div class="detail-cover-fallback hidden">${escapeHtml(title)}</div></div>
         <h1 class="detail-name">${escapeHtml(title)}</h1>
         ${author?`<p class="detail-author">${escapeHtml(author)}</p>`:''}${publicationDate?`<p class="detail-meta-line">Publicação: ${escapeHtml(publicationDate)}</p>`:''}
-        <div class="detail-actions"><button class="detail-primary" type="button"><span class="detail-primary-icon">▶</span><span>${isFolder?'Ver capítulos':'Ler agora'}</span></button>${isFolder?`<button class="detail-download-all" type="button" aria-label="Baixar coleção inteira para uso offline" title="Baixar coleção inteira">${ICONS.downloadArrow}</button>`:''}<button class="detail-favorite" type="button" aria-label="Favoritar" title="Favoritar">♥</button></div>
+        <div class="detail-actions"><button class="detail-primary" type="button"><span class="detail-primary-icon">▶</span><span>${isFolder?'Ver capítulos':'Ler agora'}</span></button>${isFolder?`<button class="detail-download-all" type="button" aria-label="Baixar coleção inteira para uso offline" title="Baixar coleção inteira">${ICONS.downloadArrow}</button>`:`<span class="detail-download-one" aria-label="Baixar para ler offline" title="Baixar para ler offline">${ICONS.downloadArrow}</span>`}<button class="detail-favorite" type="button" aria-label="Favoritar" title="Favoritar">♥</button></div>
         <div class="detail-stats"><div class="detail-stat"><strong data-detail-count>${countLabel}</strong><span>${isFolder?'na coleção':'leitura disponível'}</span></div><div class="detail-stat"><strong>${escapeHtml(meta.period)}</strong><span>fase / edição</span></div></div>
       </section>
       <section class="detail-section"><h3>Gêneros</h3><div class="detail-chips">${meta.genres.map(g=>`<span class="detail-chip">${escapeHtml(g)}</span>`).join('')}</div></section>
@@ -4399,9 +4472,24 @@ function renderCollectionDetails(){
   if(collectionDetailTab==='details'){
     const downloadAll=screen.querySelector('.detail-download-all');
     if(downloadAll) downloadAll.onclick=()=>downloadFolderOffline({id:item.id,name:item.name});
+    const downloadOne=screen.querySelector('.detail-download-one');
+    if(downloadOne){
+      if(!Array.isArray(item._path)) item._path=state.path.map(p=>p.name);
+      const downloadButton=buildCornerDownloadButton(item);
+      downloadButton.classList.add('detail-download-one');
+      downloadOne.replaceWith(downloadButton);
+    }
     const fav=screen.querySelector('.detail-favorite');
     isFavorite(item.id).then(v=>{ if(fav && fav.isConnected) fav.classList.toggle('active',v); });
-    if(fav) fav.onclick=async()=>{ const now=await toggleFavorite(item); fav.classList.toggle('active',now); toast(now?'Adicionado aos favoritos':'Removido dos favoritos'); };
+    if(fav) fav.onclick=async()=>{
+      try{
+        const now=await toggleFavorite(item);
+        fav.classList.toggle('active',now);
+        fav.setAttribute('aria-label',now?'Remover dos favoritos':'Favoritar');
+        fav.title=now?'Remover dos favoritos':'Favoritar';
+        toast(now?'Adicionado aos favoritos':'Removido dos favoritos');
+      }catch(err){ toast(err?.message||'Não foi possível atualizar os favoritos'); }
+    };
     const primary=screen.querySelector('.detail-primary');
     if(primary) primary.onclick=async()=>{
       if(!isFolder){
@@ -6105,20 +6193,33 @@ async function openFavoriteFolder(f){
 async function renderFavorites(){
   const grid = $('#grid-favorites');
   let items;
-  try{items=(await idbAll('favorites')).filter(it=>it.mimeType==='application/vnd.google-apps.folder');}
+  try{items=await idbAll('favorites');}
   catch(err){renderAppState(grid,{type:'error',icon:ICONS.warning,title:'Não foi possível abrir os favoritos',message:'O armazenamento local está indisponível. Seus favoritos não foram apagados.',actions:[{label:'Tentar novamente',primary:true,onClick:()=>renderFavorites()}]});return;}
   releaseCoverObservers(grid);
   grid.innerHTML = '';
   if(items.length===0){
-    renderAppState(grid,{icon:ICONS.star,title:'Nenhum favorito ainda',message:'Toque na estrela de uma coleção para guardá-la nesta lista.',actions:[{label:'Explorar biblioteca',primary:true,onClick:()=>$('#tab-library').click()}]});
+    renderAppState(grid,{icon:ICONS.star,title:'Nenhum favorito ainda',message:'Toque no coração de uma HQ ou coleção para guardá-la nesta lista.',actions:[{label:'Explorar biblioteca',primary:true,onClick:()=>$('#tab-library').click()}]});
     return;
   }
-  items.sort((a,b)=>b.addedAt-a.addedAt);
+  items.sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
+  state.currentListContext=items;
+  state.currentListIsLocal=false;
   items.forEach(it=>{
-    const card = renderFolderCard(it, {onOpen: openFavoriteFolder});
+    const isFolder=it.mimeType==='application/vnd.google-apps.folder';
+    if(isFolder){
+      const card=renderFolderCard(it,{onOpen:openFavoriteFolder});
+      grid.appendChild(card);
+      if(!card.classList.contains('cover-immediate')) lazyLoadCover(card,()=>attachFolderCoverAsync(card,{id:it.id,name:it.name}));
+      return;
+    }
+    const card=renderComicCard(it,{onOpen:async file=>{
+      try{ await openReader(file,undefined,file.parentId||null); }
+      catch(err){ showToast(err?.message||'Não foi possível abrir esta HQ.'); }
+    }});
+    card.appendChild(buildFavButton(it));
     grid.appendChild(card);
-    if(card.classList.contains('cover-immediate')) return;
-    lazyLoadCover(card, ()=>attachFolderCoverAsync(card, {id: it.id, name: it.name}));
+    const placeholder=card.querySelector('.cover-placeholder');
+    if(placeholder) lazyLoadCover(card,()=>attachCoverToEl(placeholder,{id:it.id,name:it.name,_ext:it._ext,mimeType:it.mimeType,thumbnailLink:it.thumbnailLink}));
   });
 }
 
@@ -6307,7 +6408,8 @@ async function toggleFavorite(fileMeta){
     id: fileMeta.id, name: fileMeta.name, mimeType: fileMeta.mimeType,
     size: fileMeta.size, _ext: fileMeta._ext || guessExt(fileMeta),
     thumbnailLink: fileMeta.thumbnailLink,
-    path: state.path.map(p=>p.name).join(' / '),
+    parentId: fileMeta.parentId || fileMeta._parentId || state.path[state.path.length-1]?.id || null,
+    path: fileMeta._path ? ['Biblioteca',...fileMeta._path].join(' / ') : state.path.map(p=>p.name).join(' / '),
     addedAt: Date.now()
   });
   return true;
@@ -8531,7 +8633,7 @@ function paintHomeSectionsNow(wrap, data){
     (it)=>{
       return buildCarouselCard(it, { isFolder:true });
     },
-    { kind: SECTION_KINDS.MISTA }
+    { kind: SECTION_KINDS.MISTA, detailsRootFolderId: HOMEM_ARANHA_COLLECTION_FOLDER_ID }
   );
   if(secAranha){ built['aranha'] = secAranha; wireHomeLogoFallback(secAranha, 'aranha'); }
 
@@ -8603,7 +8705,7 @@ function paintHomeSectionsNow(wrap, data){
     (it)=>{
       return buildCarouselCard(it, { isFolder:true });
     },
-    { kind: SECTION_KINDS.MISTA,folderNames:['superman'],parentNames:['dc'] }
+    { kind: SECTION_KINDS.MISTA,folderNames:['superman'],parentNames:['dc'],detailsRootFolderId:SUPERMAN_COLLECTION_FOLDER_ID }
   );
   if(secSuperman){ built['superman'] = secSuperman; wireHomeLogoFallback(secSuperman, 'superman'); }
 
@@ -8704,7 +8806,7 @@ function paintHomeSectionsNow(wrap, data){
     (it)=>{
       return buildCarouselCard(it, { isFolder:true });
     },
-    { kind: SECTION_KINDS.MISTA }
+    { kind: SECTION_KINDS.MISTA, detailsRootFolderId: THANOS_COLLECTION_FOLDER_ID }
   );
   if(secThanos){ built['thanos'] = secThanos; }
 
@@ -8714,7 +8816,7 @@ function paintHomeSectionsNow(wrap, data){
     (it)=>{
       return buildCarouselCard(it, { isFolder:true });
     },
-    { kind: SECTION_KINDS.MISTA }
+    { kind: SECTION_KINDS.MISTA, detailsRootFolderId: DARKSEID_COLLECTION_FOLDER_ID }
   );
   if(secDarkseid){ built['darkseid'] = secDarkseid; }
 
