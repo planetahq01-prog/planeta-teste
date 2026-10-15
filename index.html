@@ -3238,6 +3238,8 @@ async function warmFolderCoverMemoryCache(){
 // espera) quando: tem um override manual (URL fixa), OU já sabemos qual
 // arquivo é a capa dela E a miniatura desse arquivo já está em memória.
 function getImmediateFolderCoverSrc(folderObj){
+  const customCoverSrc=getCustomDetailCoverSrc(folderObj.id);
+  if(customCoverSrc) return customCoverSrc;
   const override = getFolderCoverOverride(folderObj.name);
   if(override) return override;
   const file = folderCoverFileMemoryCache.get(folderObj.id);
@@ -4259,9 +4261,10 @@ function renderFolderCard(f, opts){
   // — a coleção já nasce com a capinha, em vez de esperar entrar na tela.
   const immediateSrc = getImmediateFolderCoverSrc(f);
   if(immediateSrc){
-    const img = buildCoverNode(immediateSrc);
+    const customCoverFile=getCustomDetailCoverFile(f.id);
+    const img = buildCoverNode(immediateSrc,customCoverFile||undefined);
     img.classList.add('loaded'); // sem fade: já está pronta desde o primeiro frame
-    wireImmediateFolderCoverRetry(img, f);
+    if(!customCoverFile) wireImmediateFolderCoverRetry(img, f);
     cover.appendChild(img);
     card.classList.add('has-cover','cover-immediate');
   } else {
@@ -6741,6 +6744,7 @@ function loadCustomDetailMetadata(itemId){
           const payload=await response.json();
           if(payload&&payload.items&&typeof payload.items==='object'&&!Array.isArray(payload.items)){
             CUSTOM_DETAIL_METADATA=mergeCustomDetailMetadata(payload.items);
+            applyCustomCoversToVisibleCards();
             if(activeCollectionDetail) renderCollectionDetails();
             return;
           }
@@ -6750,8 +6754,10 @@ function loadCustomDetailMetadata(itemId){
         const response=await fetch(new URL('./metadata.json',document.baseURI),{cache:'no-cache'});
         if(response.ok){
           const payload=await response.json();
-          if(payload?.items&&typeof payload.items==='object'&&!Array.isArray(payload.items))
+          if(payload?.items&&typeof payload.items==='object'&&!Array.isArray(payload.items)){
             CUSTOM_DETAIL_METADATA=mergeCustomDetailMetadata(payload.items);
+            applyCustomCoversToVisibleCards();
+          }
         }
       }catch(_){}
       if(activeCollectionDetail) renderCollectionDetails();
@@ -6760,6 +6766,26 @@ function loadCustomDetailMetadata(itemId){
   // As fichas incluídas no index.html já estão prontas. Atualizações remotas
   // continuam carregando em segundo plano para os demais itens/edições manuais.
   return hasInlineItem?Promise.resolve():customDetailMetadataPromise;
+}
+function applyCustomCoversToVisibleCards(){
+  if(!document.body) return;
+  for(const card of document.querySelectorAll('.card[data-id],.carousel-card[data-id]')){
+    const itemId=card.dataset.id;
+    const coverFile=getCustomDetailCoverFile(itemId);
+    if(!coverFile) continue;
+    const coverBox=card.querySelector('.folder-cover,.cc-cover')||card;
+    const prior=coverBox.querySelector('img.cover');
+    if(prior?.dataset.customDetailCoverId===coverFile.id) continue;
+    const placeholder=coverBox.querySelector('.cover-placeholder,.cc-placeholder');
+    const src=detailCoverUrl(coverFile.id);
+    if(!src) continue;
+    const img=buildCoverNode(src,coverFile);
+    img.dataset.customDetailCoverId=coverFile.id;
+    card.classList.add('has-cover','cover-immediate');
+    if(prior) prior.replaceWith(img);
+    else if(placeholder) mountCoverNodeOverPlaceholder(placeholder,img);
+    else coverBox.prepend(img);
+  }
 }
 function collectionDetailMeta(item){
   const manual=CUSTOM_DETAIL_METADATA[item?.id]||{};
@@ -6960,8 +6986,8 @@ function renderCollectionDetails(){
   if(coverSlot){
     const loadCover=async()=>{
       let coverFile=item;
-      const customCoverId=CUSTOM_DETAIL_METADATA[item.id]?.coverId;
-      if(customCoverId) coverFile={id:customCoverId,name:'capa personalizada.jpg',mimeType:'image/jpeg',_ext:'jpg',detailCover:true};
+      const customCoverFile=getCustomDetailCoverFile(item.id);
+      if(customCoverFile) coverFile=customCoverFile;
       else if(isFolder){ try{ coverFile=await resolveFolderCoverFile(item.id); }catch(e){ coverFile=null; } }
       if(!coverFile){ const fb=screen.querySelector('.detail-cover-fallback'); if(fb) fb.classList.remove('hidden'); coverSlot.remove(); return; }
       try{ await attachCoverToEl(coverSlot,coverFile); }catch(e){ const fb=screen.querySelector('.detail-cover-fallback'); if(fb) fb.classList.remove('hidden'); }
@@ -7084,8 +7110,8 @@ function buildCollectionChapterCard(entry,index,parentId){
   const placeholder=card.querySelector('.cover-placeholder');
   const loadCover=async()=>{
     let coverFile=entry;
-    const customCoverId=CUSTOM_DETAIL_METADATA[entry.id]?.coverId;
-    if(customCoverId) coverFile={id:customCoverId,name:'capa personalizada.jpg',mimeType:'image/jpeg',_ext:'jpg',detailCover:true};
+    const customCoverFile=getCustomDetailCoverFile(entry.id);
+    if(customCoverFile) coverFile=customCoverFile;
     else if(folder){ try{ coverFile=await resolveFolderCoverFile(entry.id); }catch(e){ coverFile=null; } }
     if(!coverFile){ placeholder.classList.remove('skeleton'); return; }
     try{ await attachCoverToEl(placeholder,coverFile); }catch(e){ placeholder.classList.remove('skeleton'); }
@@ -7357,6 +7383,29 @@ const COVER_CHECK_TIMEOUT_MS = 4000;
 function r2CoverUrl(fileId){
   return `${CONFIG.proxyUrl}?cover=1&id=${encodeURIComponent(fileId)}&code=${encodeURIComponent(ACCESS_CODE || '')}&device=${encodeURIComponent(getDeviceId())}&type=${encodeURIComponent(getDeviceType())}`;
 }
+function detailCoverUrl(fileId){
+  if(!CONFIG.proxyUrl||!fileId) return null;
+  return `${CONFIG.proxyUrl}?detail_cover=1&id=${encodeURIComponent(fileId)}&code=${encodeURIComponent(ACCESS_CODE || '')}&device=${encodeURIComponent(getDeviceId())}&type=${encodeURIComponent(getDeviceType())}`;
+}
+function customDetailCoverRecord(itemId){
+  const id=String(itemId??'');
+  const direct=CUSTOM_DETAIL_METADATA[id];
+  if(direct?.coverId) return direct;
+  const aliasIds=DETAIL_COLLECTION_ID_ALIASES[id];
+  for(const aliasId of (Array.isArray(aliasIds)?aliasIds:(aliasIds?[aliasIds]:[]))){
+    const record=CUSTOM_DETAIL_METADATA[aliasId];
+    if(record?.coverId) return record;
+  }
+  return null;
+}
+function getCustomDetailCoverFile(itemId){
+  const record=customDetailCoverRecord(itemId);
+  return record?.coverId?{id:String(record.coverId),name:'capa personalizada',mimeType:'image/jpeg',_ext:'jpg',detailCover:true}:null;
+}
+function getCustomDetailCoverSrc(itemId){
+  const file=getCustomDetailCoverFile(itemId);
+  return file?detailCoverUrl(file.id):null;
+}
 function isR2CoverUrl(u){
   return typeof u === 'string' && !!CONFIG.proxyUrl && u.startsWith(CONFIG.proxyUrl + '?cover=1');
 }
@@ -7383,7 +7432,9 @@ async function checkCoverInR2(fileId){
 
 async function resolveCoverSrc(f, opts){
   opts = opts || {};
-  if(f && f.detailCover && CONFIG.proxyUrl) return `${CONFIG.proxyUrl}?detail_cover=1&id=${encodeURIComponent(f.id)}&code=${encodeURIComponent(ACCESS_CODE || '')}&device=${encodeURIComponent(getDeviceId())}&type=${encodeURIComponent(getDeviceType())}`;
+  if(f && f.detailCover && CONFIG.proxyUrl) return detailCoverUrl(f.id);
+  const customCoverSrc=f&&getCustomDetailCoverSrc(f.id);
+  if(customCoverSrc) return customCoverSrc;
   if(coverMemoryCache.has(f.id)){
     const memo = coverMemoryCache.get(f.id);
     if(memo) return freshenCoverUrl(memo);
@@ -8064,6 +8115,12 @@ function getFolderCoverOverride(name){
 
 async function attachFolderCoverAsync(card, folderObj){
   const placeholder = card.querySelector('.cover-placeholder');
+  const customCoverFile=getCustomDetailCoverFile(folderObj.id);
+  if(customCoverFile){
+    card.classList.add('has-cover');
+    await attachCoverToEl(placeholder,customCoverFile);
+    return;
+  }
   const override = getFolderCoverOverride(folderObj.name);
   if(override){
     card.classList.add('has-cover');
@@ -9994,12 +10051,13 @@ function buildCarouselCard(item, opts){
   // IntersectionObserver + a busca assíncrona de novo.
   const immediateSrc = isFolder
     ? getImmediateFolderCoverSrc(item)
-    : (typeof coverMemoryCache.get(item.id) === 'string' ? coverMemoryCache.get(item.id) : null);
+    : (getCustomDetailCoverSrc(item.id) || (typeof coverMemoryCache.get(item.id) === 'string' ? coverMemoryCache.get(item.id) : null));
   let hasImmediateCover = false;
   if(immediateSrc){
-    const img = buildCoverNode(immediateSrc, isFolder ? null : item);
+    const customCoverFile=isFolder?getCustomDetailCoverFile(item.id):null;
+    const img = buildCoverNode(immediateSrc, isFolder ? (customCoverFile||null) : item);
     img.classList.add('loaded');
-    if(isFolder) wireImmediateFolderCoverRetry(img, item);
+    if(isFolder&&!customCoverFile) wireImmediateFolderCoverRetry(img, item);
     cover.appendChild(img);
     hasImmediateCover = true;
   } else {
@@ -10019,8 +10077,12 @@ function buildCarouselCard(item, opts){
     try{
       let src, coverFile;
       if(isFolder){
+        const customCoverFile=getCustomDetailCoverFile(item.id);
         const override = getFolderCoverOverride(item.name);
-        if(override){
+        if(customCoverFile){
+          coverFile=customCoverFile;
+          src=await resolveCoverSrc(coverFile,{persistOffline:true});
+        } else if(override){
           src = override;
         } else {
           coverFile = await resolveFolderCoverFile(item.id);
@@ -11891,6 +11953,10 @@ document.addEventListener('keydown', e=>{
 
 $('#btn-refresh').onclick = async ()=>{
   closeMenu();
+  // Atualiza também as fichas remotas (inclui coverId) para que a capa escolhida
+  // no editor apareça nas telas já abertas e nas próximas listas do catálogo.
+  customDetailMetadataPromise=null;
+  void loadCustomDetailMetadata();
   coverMemoryCache.clear();
   coverFailUntil.clear();
   // IMPORTANTE: não apagamos mais o cache do localStorage (ARANHA/XMEN/
