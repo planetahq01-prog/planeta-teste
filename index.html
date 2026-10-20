@@ -701,7 +701,7 @@ body.theme-transitioning .tab.active{
 .carousel.dragging *{pointer-events:none;}
 .carousel-card.loading{opacity:.6;pointer-events:none;}
 .carousel-card{
-  flex:0 0 150px;width:150px;scroll-snap-align:start;
+  flex:0 0 138px;width:138px;scroll-snap-align:start;
   display:flex;flex-direction:column;gap:6px;
   background:none;border:none;padding:0;text-align:left;
   color:var(--paper);font-family:var(--font-body);
@@ -725,10 +725,10 @@ body.theme-transitioning .tab.active{
   font-size:13px;
 }
 @media(max-width:699px){
-  /* Igual ao tamanho de referência de Lançamentos no celular. */
+  /* Outras seções mantêm três capas visíveis; Lançamentos tem regra própria. */
   .carousel-card{
-    flex-basis:calc((100vw - 52px)/2.5);
-    width:calc((100vw - 52px)/2.5);
+    flex-basis:calc((100vw - 44px)/3);
+    width:calc((100vw - 44px)/3);
   }
   .home-section[data-home-key="lancamentos"] .carousel-card{
     flex-basis:calc((100vw - 52px)/2.5);
@@ -1194,10 +1194,10 @@ html,body,button,input,select,textarea{font-family:'WhizBang','Inter',sans-serif
 #direction-segmented button{font-size:10px;padding:7px 3px;}
 
 
-/* Carrosséis Home no celular: todas as seções usam o tamanho de Lançamentos. */
+/* Carrosséis Home no celular: três capas nas seções comuns; Lançamentos fica maior pela regra específica acima. */
 @media(max-width:699px){
   .carousel{gap:8px;padding-left:14px;padding-right:14px;}
-  .carousel-card{flex:0 0 calc((100vw - 52px)/2.5);width:calc((100vw - 52px)/2.5);}
+  .carousel-card{flex:0 0 calc((100vw - 44px)/3);width:calc((100vw - 44px)/3);}
   .carousel-card .cc-cover{border-radius:5px;}
   .carousel-card .cc-name{font-size:11px;}
 }
