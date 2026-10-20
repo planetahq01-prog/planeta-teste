@@ -401,15 +401,15 @@ button:focus-visible, input:focus-visible{outline:2px solid var(--accent);outlin
 .zoom-wrap img{max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;display:block;}
 .page-turn-sheet{
   position:absolute;z-index:2;pointer-events:none;transform-style:preserve-3d;
-  backface-visibility:hidden;will-change:transform;box-shadow:0 0 18px rgba(0,0,0,.35);
+  backface-visibility:hidden;will-change:transform,opacity;contain:paint;transform:translateZ(0);
 }
 .page-turn-sheet.forward{transform-origin:left center;}
 .page-turn-sheet.backward{transform-origin:right center;}
-.page-turn-sheet.turning.forward{animation:planetPageFlipForward .44s cubic-bezier(.22,.68,.16,1) both;}
-.page-turn-sheet.turning.backward{animation:planetPageFlipBackward .44s cubic-bezier(.22,.68,.16,1) both;}
+.page-turn-sheet.turning.forward{animation:planetPageFlipForward .5s cubic-bezier(.22,.61,.36,1) both;}
+.page-turn-sheet.turning.backward{animation:planetPageFlipBackward .5s cubic-bezier(.22,.61,.36,1) both;}
 .page-turn-sheet.spread .page-turn-back{display:none;}
-.page-turn-sheet.turning.spread.forward{animation:planetPageSpreadForward .22s ease-out both;}
-.page-turn-sheet.turning.spread.backward{animation:planetPageSpreadBackward .22s ease-out both;}
+.page-turn-sheet.turning.spread.forward{animation:planetPageSpreadForward .4s cubic-bezier(.22,.61,.36,1) both;}
+.page-turn-sheet.turning.spread.backward{animation:planetPageSpreadBackward .4s cubic-bezier(.22,.61,.36,1) both;}
 .page-turn-front,.page-turn-back{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;}
 .page-turn-image{display:block;width:100%;height:100%;object-fit:fill;user-select:none;-webkit-user-drag:none;}
 .page-turn-back{
@@ -421,7 +421,7 @@ button:focus-visible, input:focus-visible{outline:2px solid var(--accent);outlin
   background:linear-gradient(90deg,rgba(0,0,0,.3),transparent 55%,rgba(0,0,0,.08));
   opacity:0;
 }
-.page-turn-sheet.turning::after{animation:planetPageShade .44s ease-in-out both;}
+.page-turn-sheet.turning::after{animation:planetPageShade .5s ease-in-out both;}
 @keyframes planetPageFlipForward{
   0%{transform:perspective(1200px) rotateY(0deg);}
   48%{transform:perspective(1200px) rotateY(-96deg);}
@@ -9395,17 +9395,20 @@ async function changeReaderPageImages(container, entries, direction){
   }
   for(const {image,src} of entries) image.src = src || '';
   if(!layers.length) return;
-  await Promise.race([
-    Promise.all(entries.map(({image})=>typeof image.decode==='function' ? image.decode().catch(()=>{}) : Promise.resolve())),
-    new Promise(resolve=>setTimeout(resolve,350))
-  ]);
-  if(token !== readerPageTurnToken) return;
+  // A folha sobreposta já contém a página anterior carregada. Não espere
+  // decode() da nova página: isso podia atrasar o início em centenas de ms.
+  // A página nova aparece por baixo enquanto a folha sai, sem bloquear o toque.
   requestAnimationFrame(()=>{
-    if(token === readerPageTurnToken) layers.forEach(layer=>layer.classList.add('turning'));
+    if(token !== readerPageTurnToken) return;
+    layers.forEach(layer=>{
+      if(!layer.isConnected)return;
+      layer.classList.add('turning');
+      const duration=state.reader.mode==='double'?400:500;
+      const cleanup=()=>layer.remove();
+      layer.addEventListener('animationend',cleanup,{once:true});
+      setTimeout(cleanup,duration+100);
+    });
   });
-  setTimeout(()=>{
-    if(token === readerPageTurnToken) layers.forEach(layer=>layer.remove());
-  },520);
 }
 
 function readerTurnDirection(fromIndex, toIndex){
