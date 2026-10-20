@@ -701,7 +701,7 @@ body.theme-transitioning .tab.active{
 .carousel.dragging *{pointer-events:none;}
 .carousel-card.loading{opacity:.6;pointer-events:none;}
 .carousel-card{
-  flex:0 0 138px;width:138px;scroll-snap-align:start;
+  flex:0 0 150px;width:150px;scroll-snap-align:start;
   display:flex;flex-direction:column;gap:6px;
   background:none;border:none;padding:0;text-align:left;
   color:var(--paper);font-family:var(--font-body);
@@ -718,16 +718,13 @@ body.theme-transitioning .tab.active{
    navegador do computador (no toque isso nunca foi um problema). */
 .carousel-card, .carousel-card *{user-select:none;-webkit-user-drag:none;}
 @media(hover:hover){ .carousel-card:hover .cc-cover{transform:translateY(-3px);} }
-.home-section[data-home-key="lancamentos"] .carousel-card{
-  flex-basis:150px;width:150px;
-}
 .home-section[data-home-key="lancamentos"] .carousel-card .cc-name{
   font-size:13px;
 }
 @media(max-width:699px){
-  /* Com 16px de margem e 10px entre cards, deixa aproximadamente 2,5
-     capas visíveis na largura da tela. */
-  .home-section[data-home-key="lancamentos"] .carousel-card{
+  /* Todas as seções usam a mesma largura responsiva de Lançamentos,
+     mantendo visíveis cerca de 2,5 capas no celular. */
+  .carousel-card{
     flex-basis:calc((100vw - 52px)/2.5);
     width:calc((100vw - 52px)/2.5);
   }
@@ -9393,20 +9390,28 @@ async function changeReaderPageImages(container, entries, direction){
       layers.push(sheet);
     }
   }
+  // Force a layout after inserting the old-page snapshots. This commits their
+  // initial geometry before the underlying <img> changes to the next page;
+  // otherwise some WebViews coalesce both updates and briefly paint the new
+  // page without the turning sheet.
+  if(layers.length) layers.forEach(layer=>void layer.getBoundingClientRect());
   for(const {image,src} of entries) image.src = src || '';
   if(!layers.length) return;
-  // A folha sobreposta já contém a página anterior carregada. Não espere
-  // decode() da nova página: isso podia atrasar o início em centenas de ms.
-  // A página nova aparece por baixo enquanto a folha sai, sem bloquear o toque.
+  // The snapshot uses the already-painted previous page, so never wait for
+  // decoding the destination image. Two frames guarantee WebViews paint the
+  // static snapshot once before starting its animation (no raw-page flash).
   requestAnimationFrame(()=>{
     if(token !== readerPageTurnToken) return;
-    layers.forEach(layer=>{
-      if(!layer.isConnected)return;
-      layer.classList.add('turning');
-      const duration=state.reader.mode==='double'?400:500;
-      const cleanup=()=>layer.remove();
-      layer.addEventListener('animationend',cleanup,{once:true});
-      setTimeout(cleanup,duration+100);
+    requestAnimationFrame(()=>{
+      if(token !== readerPageTurnToken) return;
+      layers.forEach(layer=>{
+        if(!layer.isConnected)return;
+        layer.classList.add('turning');
+        const duration=state.reader.mode==='double'?400:500;
+        const cleanup=()=>layer.remove();
+        layer.addEventListener('animationend',cleanup,{once:true});
+        setTimeout(cleanup,duration+120);
+      });
     });
   });
 }
