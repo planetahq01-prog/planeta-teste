@@ -718,13 +718,19 @@ body.theme-transitioning .tab.active{
    navegador do computador (no toque isso nunca foi um problema). */
 .carousel-card, .carousel-card *{user-select:none;-webkit-user-drag:none;}
 @media(hover:hover){ .carousel-card:hover .cc-cover{transform:translateY(-3px);} }
+.home-section[data-home-key="lancamentos"] .carousel-card{
+  flex-basis:150px;width:150px;
+}
 .home-section[data-home-key="lancamentos"] .carousel-card .cc-name{
   font-size:13px;
 }
 @media(max-width:699px){
-  /* Todas as seções usam a mesma largura responsiva de Lançamentos,
-     mantendo visíveis cerca de 2,5 capas no celular. */
+  /* Igual ao tamanho de referência de Lançamentos no celular. */
   .carousel-card{
+    flex-basis:calc((100vw - 52px)/2.5);
+    width:calc((100vw - 52px)/2.5);
+  }
+  .home-section[data-home-key="lancamentos"] .carousel-card{
     flex-basis:calc((100vw - 52px)/2.5);
     width:calc((100vw - 52px)/2.5);
   }
@@ -1188,10 +1194,10 @@ html,body,button,input,select,textarea{font-family:'WhizBang','Inter',sans-serif
 #direction-segmented button{font-size:10px;padding:7px 3px;}
 
 
-/* Carrosséis Home no celular: três capas inteiras visíveis; telas maiores preservam 138px. */
+/* Carrosséis Home no celular: todas as seções usam o tamanho de Lançamentos. */
 @media(max-width:699px){
   .carousel{gap:8px;padding-left:14px;padding-right:14px;}
-  .carousel-card{flex:0 0 calc((100vw - 44px)/3);width:calc((100vw - 44px)/3);}
+  .carousel-card{flex:0 0 calc((100vw - 52px)/2.5);width:calc((100vw - 52px)/2.5);}
   .carousel-card .cc-cover{border-radius:5px;}
   .carousel-card .cc-name{font-size:11px;}
 }
